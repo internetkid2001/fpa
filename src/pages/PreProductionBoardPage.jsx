@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Added useEffect if you use it later
+import React, { useState } from 'react'; // Removed useEffect as it's not used here directly
 import KanbanColumn from '../components/KanbanColumn';
 import TaskTableView from '../components/TaskTableView';
 import TaskDetailModal from '../components/TaskDetailModal';
@@ -24,40 +24,59 @@ const KANBAN_COLUMN_CONFIG = [
   { id: 'completedCol', title: 'Completed', statusFilter: 'Completed' },
 ];
 
-
 function PreProductionBoardPage() {
   const [activeView, setActiveView] = useState('kanban');
   const [tasks, setTasks] = useState(sampleTasksData);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null); // if null, indicates creating a new task for the modal
 
-  const handleOpenModal = (task) => {
-    setSelectedTask(task);
+  // Modified to handle opening for 'new' task or 'edit' task
+  const handleOpenModal = (task = null) => { // Default task to null for creating
+    setSelectedTask(task); // If task is null, modal will know it's for creation
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedTask(null);
+    setSelectedTask(null); // Reset selectedTask on close
   };
 
-  // New function to handle saving updated task data
-  const handleSaveTask = (updatedTaskData) => {
-    setTasks(prevTasks => 
-      prevTasks.map(task => 
-        task.id === updatedTaskData.id ? { ...task, ...updatedTaskData } : task
-      )
-    );
-    handleCloseModal(); // Close modal after saving
+  // Modified to handle both creating new tasks and updating existing ones
+  const handleSaveTask = (taskDataFromModal) => {
+    if (taskDataFromModal.id) {
+      // Editing existing task
+      setTasks(prevTasks =>
+        prevTasks.map(task =>
+          task.id === taskDataFromModal.id ? { ...task, ...taskDataFromModal } : task
+        )
+      );
+    } else {
+      // Adding new task
+      const newTask = {
+        ...taskDataFromModal,
+        id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Generate a unique ID
+      };
+      setTasks(prevTasks => [...prevTasks, newTask]);
+    }
+    handleCloseModal();
   };
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8 transition-colors duration-300">
       <div className="max-w-full mx-auto">
         <header className="mb-6">
-          {/* ... (Header and view switcher buttons remain unchanged) ... */}
-          <h1 className="text-3xl font-bold">Pre-Production Board</h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold">Pre-Production Board</h1>
+            {/* Add Task Button */}
+            <button
+              onClick={() => handleOpenModal()} // Call with no arguments for 'add task' mode
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
+            >
+              Add New Task
+            </button>
+          </div>
           <div className="mt-4 flex space-x-2">
+            {/* ... (View switcher buttons remain unchanged) ... */}
             <button
               onClick={() => setActiveView('kanban')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150
@@ -82,6 +101,7 @@ function PreProductionBoardPage() {
         </header>
 
         <main>
+          {/* ... (Kanban and Table view rendering remains the same, passing handleOpenModal) ... */}
           {activeView === 'kanban' && (
             <div className="flex space-x-4 overflow-x-auto pb-4">
               {KANBAN_COLUMN_CONFIG.map((columnConfig) => {
@@ -107,11 +127,12 @@ function PreProductionBoardPage() {
         </main>
       </div>
 
-      <TaskDetailModal 
-        isOpen={isModalOpen} 
+      <TaskDetailModal
+        isOpen={isModalOpen}
+        // Pass the selectedTask. If it's null, the modal will know it's for creating.
         task={selectedTask} 
         onClose={handleCloseModal}
-        onSave={handleSaveTask} // Pass the new save handler
+        onSave={handleSaveTask}
       />
     </div>
   );
