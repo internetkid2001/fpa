@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect if you use it later
 import KanbanColumn from '../components/KanbanColumn';
 import TaskTableView from '../components/TaskTableView';
-import TaskDetailModal from '../components/TaskDetailModal'; // 1. Import the modal
+import TaskDetailModal from '../components/TaskDetailModal';
 
-// Sample Data (as defined previously)
+// ... (sampleTasksData and KANBAN_COLUMN_CONFIG remain the same)
 const sampleTasksData = [
-  // ... (your existing sampleTasksData remains here) ...
   { id: 'task-1', title: 'Equipment Draft', status: 'Not Started', category: 'Equipment', description: 'Draft initial list of required equipment.', dueDate: '2025-06-15' },
   { id: 'task-2', title: 'Shot List (Scene 1-5)', status: 'In Progress', category: 'Shot', description: 'Detail all shots for scenes 1 through 5.', dueDate: '2025-06-30' },
   { id: 'task-3', title: 'Crew Draft', status: 'Not Started', category: 'Crew', description: 'Identify key crew members and availability.', dueDate: '2025-06-20' },
@@ -19,22 +18,19 @@ const sampleTasksData = [
 ];
 
 const KANBAN_COLUMN_CONFIG = [
-  // ... (your existing KANBAN_COLUMN_CONFIG remains here) ...
   { id: 'notStartedCol', title: 'Not Started', statusFilter: 'Not Started' },
   { id: 'inProgressCol', title: 'In Progress', statusFilter: 'In Progress' },
   { id: 'delayedCol', title: 'Delayed', statusFilter: 'Delayed' },
   { id: 'completedCol', title: 'Completed', statusFilter: 'Completed' },
 ];
 
+
 function PreProductionBoardPage() {
   const [activeView, setActiveView] = useState('kanban');
   const [tasks, setTasks] = useState(sampleTasksData);
-  
-  // 2. Add state for modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
-  // 3. Functions to handle modal
   const handleOpenModal = (task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
@@ -43,6 +39,16 @@ function PreProductionBoardPage() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedTask(null);
+  };
+
+  // New function to handle saving updated task data
+  const handleSaveTask = (updatedTaskData) => {
+    setTasks(prevTasks => 
+      prevTasks.map(task => 
+        task.id === updatedTaskData.id ? { ...task, ...updatedTaskData } : task
+      )
+    );
+    handleCloseModal(); // Close modal after saving
   };
 
   return (
@@ -85,7 +91,7 @@ function PreProductionBoardPage() {
                     key={columnConfig.id}
                     title={columnConfig.title}
                     tasks={columnTasks}
-                    onTaskClick={handleOpenModal} // 4. Pass handleOpenModal to KanbanColumn
+                    onTaskClick={handleOpenModal}
                   />
                 );
               })}
@@ -95,17 +101,17 @@ function PreProductionBoardPage() {
           {activeView === 'table' && (
             <TaskTableView 
               tasks={tasks} 
-              onTaskClick={handleOpenModal} // 4. Pass handleOpenModal to TaskTableView
+              onTaskClick={handleOpenModal} 
             />
           )}
         </main>
       </div>
 
-      {/* 5. Render the modal conditionally */}
       <TaskDetailModal 
         isOpen={isModalOpen} 
         task={selectedTask} 
-        onClose={handleCloseModal} 
+        onClose={handleCloseModal}
+        onSave={handleSaveTask} // Pass the new save handler
       />
     </div>
   );

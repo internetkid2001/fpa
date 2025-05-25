@@ -1,94 +1,151 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-function TaskDetailModal({ task, isOpen, onClose }) {
+// Assuming KANBAN_COLUMN_CONFIG might be useful for status dropdown, or define statuses locally
+const STATUS_OPTIONS = ['Not Started', 'In Progress', 'Delayed', 'Completed', 'Cancelled'];
+const CATEGORY_OPTIONS = ['Equipment', 'Shot', 'Crew', 'Cast', 'Scene', 'Location', 'Finance', 'Script', 'Other']; // Add more as needed
+
+function TaskDetailModal({ task, isOpen, onClose, onSave }) { // Added onSave prop
+  const [formData, setFormData] = useState({});
+
+  useEffect(() => {
+    // When the modal opens or the task changes, populate formData
+    if (task) {
+      setFormData({
+        id: task.id,
+        title: task.title || '',
+        description: task.description || '',
+        status: task.status || STATUS_OPTIONS[0],
+        category: task.category || CATEGORY_OPTIONS[0],
+        dueDate: task.dueDate || '',
+      });
+    } else {
+      // Reset form data if no task (e.g., modal is closed or pre-opening)
+      setFormData({});
+    }
+  }, [task, isOpen]); // Re-run effect if task or isOpen changes
+
   if (!isOpen || !task) {
-    return null; // Don't render anything if the modal is not open or no task is selected
+    return null;
   }
 
-  // Basic color mapping for categories - can be shared or expanded
-  const categoryColorMap = {
-    Equipment: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    Shot: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    Crew: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    Cast: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    Scene: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-    Location: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
-    Finance: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    Script: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-    Default: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
-  const categoryClasses = categoryColorMap[task.category] || categoryColorMap.Default;
 
-  // Basic styling for statuses - can be shared or expanded
-  const statusClasses = task.status === 'Completed' ? 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100' :
-                       task.status === 'In Progress' ? 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100' :
-                       task.status === 'Delayed' ? 'bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-100' :
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData); // Pass the updated formData back to parent
+  };
+  
+  // Styles for category and status (can be refactored later)
+  const categoryColorMap = { /* ... same as before ... */ };
+  const statusClassesCurrent = formData.status === 'Completed' ? 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100' :
+                       formData.status === 'In Progress' ? 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100' :
+                       formData.status === 'Delayed' ? 'bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-100' :
                        'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
 
 
   return (
-    // Modal Overlay
     <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center p-4 z-50 transition-opacity duration-300 ease-in-out">
-      {/* Modal Content */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        {/* Modal Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{task.title}</h3>
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Edit Task</h3>
           <button
+            type="button" // Important: prevent form submission
             onClick={onClose}
             className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
             aria-label="Close modal"
           >
-            {/* Simple X icon using text, you can replace with an SVG icon */}
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
         </div>
 
-        {/* Modal Body - Task Details */}
-        <div className="space-y-4 text-sm text-slate-700 dark:text-slate-300">
+        <div className="space-y-4">
           <div>
-            <strong className="text-slate-600 dark:text-slate-400">Status:</strong>
-            <span className={`ml-2 px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClasses}`}>
-              {task.status}
-            </span>
+            <label htmlFor="title" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
+            <input
+              type="text"
+              name="title"
+              id="title"
+              value={formData.title || ''}
+              onChange={handleChange}
+              required
+              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 placeholder-slate-400 text-slate-900 dark:text-white dark:bg-slate-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
           </div>
+
           <div>
-            <strong className="text-slate-600 dark:text-slate-400">Category:</strong>
-            <span className={`ml-2 px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${categoryClasses}`}>
-              {task.category}
-            </span>
+            <label htmlFor="description" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <textarea
+              name="description"
+              id="description"
+              rows="4"
+              value={formData.description || ''}
+              onChange={handleChange}
+              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 placeholder-slate-400 text-slate-900 dark:text-white dark:bg-slate-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            ></textarea>
           </div>
-          {task.dueDate && (
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <strong className="text-slate-600 dark:text-slate-400">Due Date:</strong> {task.dueDate}
+              <label htmlFor="status" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status</label>
+              <select
+                name="status"
+                id="status"
+                value={formData.status || ''}
+                onChange={handleChange}
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white dark:bg-slate-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              >
+                {STATUS_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+              </select>
             </div>
-          )}
-          <div>
-            <strong className="text-slate-600 dark:text-slate-400">Description:</strong>
-            <p className="mt-1 whitespace-pre-wrap">{task.description || 'No description provided.'}</p>
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
+              <select
+                name="category"
+                id="category"
+                value={formData.category || ''}
+                onChange={handleChange}
+                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white dark:bg-slate-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              >
+                {CATEGORY_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </div>
           </div>
-          {/* Add more fields as needed */}
+          
+          <div>
+            <label htmlFor="dueDate" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Due Date</label>
+            <input
+              type="date"
+              name="dueDate"
+              id="dueDate"
+              value={formData.dueDate || ''}
+              onChange={handleChange}
+              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 placeholder-slate-400 text-slate-900 dark:text-white dark:bg-slate-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
         </div>
 
-        {/* Modal Footer (optional) */}
-        <div className="mt-6 flex justify-end space-x-3">
+        <div className="mt-8 flex justify-end space-x-3">
           <button
+            type="button" // Important: prevent form submission if not the main submit button
             onClick={onClose}
-            type="button"
-            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600 rounded-md border border-slate-300 dark:border-slate-600 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-gray-100 dark:bg-slate-600 hover:bg-gray-200 dark:hover:bg-slate-500 rounded-md border border-slate-300 dark:border-slate-500 transition-colors"
           >
-            Close
+            Cancel
           </button>
-          {/* Example: Edit button for later
           <button
-            type="button"
+            type="submit"
             className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 rounded-md transition-colors"
           >
-            Edit Task
+            Save Changes
           </button>
-          */}
         </div>
-      </div>
+      </form>
     </div>
   );
 }
