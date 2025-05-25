@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import KanbanColumn from '../components/KanbanColumn';
-import TaskTableView from '../components/TaskTableView'; // 1. Import TaskTableView
+import TaskTableView from '../components/TaskTableView';
+import TaskDetailModal from '../components/TaskDetailModal'; // 1. Import the modal
 
 // Sample Data (as defined previously)
 const sampleTasksData = [
@@ -10,7 +11,7 @@ const sampleTasksData = [
   { id: 'task-3', title: 'Crew Draft', status: 'Not Started', category: 'Crew', description: 'Identify key crew members and availability.', dueDate: '2025-06-20' },
   { id: 'task-4', title: 'Casting - Lead Roles', status: 'In Progress', category: 'Cast', description: 'Finalize casting for lead roles.', dueDate: '2025-07-10' },
   { id: 'task-5', title: 'Casting - Supporting Roles', status: 'Delayed', category: 'Cast', description: 'Casting for supporting roles is currently on hold.', dueDate: '2025-07-20' },
-  { id: 'task-6', title: 'Release Order Planning', status: 'Not Started', category: 'Scene', description: 'Plan the initial shooting release order.', dueDate: null }, // Example of task with no due date
+  { id: 'task-6', title: 'Release Order Planning', status: 'Not Started', category: 'Scene', description: 'Plan the initial shooting release order.', dueDate: null },
   { id: 'task-7', title: 'Scene Pairing Analysis', status: 'Completed', category: 'Scene', description: 'Analyze scenes for efficient pairing during shoots.', dueDate: '2025-06-01' },
   { id: 'task-8', title: 'Location Scouting - Initial List', status: 'In Progress', category: 'Location', description: 'Compile a list of potential shooting locations.', dueDate: '2025-07-01' },
   { id: 'task-9', title: 'Budget Draft v1', status: 'Completed', category: 'Finance', description: 'Initial draft of the production budget.', dueDate: '2025-05-20' },
@@ -28,6 +29,21 @@ const KANBAN_COLUMN_CONFIG = [
 function PreProductionBoardPage() {
   const [activeView, setActiveView] = useState('kanban');
   const [tasks, setTasks] = useState(sampleTasksData);
+  
+  // 2. Add state for modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+
+  // 3. Functions to handle modal
+  const handleOpenModal = (task) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTask(null);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8 transition-colors duration-300">
@@ -69,6 +85,7 @@ function PreProductionBoardPage() {
                     key={columnConfig.id}
                     title={columnConfig.title}
                     tasks={columnTasks}
+                    onTaskClick={handleOpenModal} // 4. Pass handleOpenModal to KanbanColumn
                   />
                 );
               })}
@@ -76,11 +93,20 @@ function PreProductionBoardPage() {
           )}
 
           {activeView === 'table' && (
-            // 2. Replace the placeholder with the TaskTableView component
-            <TaskTableView tasks={tasks} />
+            <TaskTableView 
+              tasks={tasks} 
+              onTaskClick={handleOpenModal} // 4. Pass handleOpenModal to TaskTableView
+            />
           )}
         </main>
       </div>
+
+      {/* 5. Render the modal conditionally */}
+      <TaskDetailModal 
+        isOpen={isModalOpen} 
+        task={selectedTask} 
+        onClose={handleCloseModal} 
+      />
     </div>
   );
 }

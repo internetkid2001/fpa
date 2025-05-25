@@ -1,7 +1,8 @@
 import React from 'react';
 
-function TaskCard({ task }) {
-  // Basic color mapping for categories - you can expand this
+// Add onClick to props
+function TaskCard({ task, onClick }) { 
+  // ... (categoryColorMap remains the same)
   const categoryColorMap = {
     Equipment: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     Shot: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
@@ -13,11 +14,14 @@ function TaskCard({ task }) {
     Script: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
     Default: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
   };
-
   const categoryClasses = categoryColorMap[task.category] || categoryColorMap.Default;
 
   return (
-    <div className="bg-white dark:bg-slate-700 p-3 mb-3 rounded-md shadow hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+    // Add onClick handler to the main div
+    <div 
+      className="bg-white dark:bg-slate-700 p-3 mb-3 rounded-md shadow hover:shadow-lg transition-shadow duration-200 cursor-pointer"
+      onClick={onClick} // Attach the onClick handler
+    >
       <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100 mb-1">
         {task.title}
       </h4>
@@ -28,7 +32,6 @@ function TaskCard({ task }) {
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${categoryClasses}`}>
           {task.category}
         </span>
-        {/* Add other small details like due date or assignee icon later if needed */}
       </div>
     </div>
   );

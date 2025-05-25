@@ -1,7 +1,8 @@
 import React from 'react';
 
-function TaskTableView({ tasks }) {
-  const tableHeaders = ['Task Name', 'Category', 'Status', 'Due Date']; // Define your table headers
+// Add onTaskClick to props
+function TaskTableView({ tasks, onTaskClick }) { 
+  const tableHeaders = ['Task Name', 'Category', 'Status', 'Due Date'];
 
   return (
     <div className="bg-white dark:bg-slate-800 shadow-md rounded-lg overflow-x-auto">
@@ -17,16 +18,17 @@ function TaskTableView({ tasks }) {
                 {header}
               </th>
             ))}
-            {/* Add an empty header for potential action buttons per row if needed later */}
-            {/* <th scope="col" className="relative px-6 py-3">
-              <span className="sr-only">Edit</span>
-            </th> */}
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
           {tasks.length > 0 ? (
             tasks.map((task) => (
-              <tr key={task.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors">
+              // Add onClick to the table row
+              <tr 
+                key={task.id} 
+                className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                onClick={() => onTaskClick(task)} // Call onTaskClick with this task
+              >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-slate-100">
                   {task.title}
                 </td>
@@ -34,26 +36,18 @@ function TaskTableView({ tasks }) {
                   {task.category}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {/* You could add more styling to status like a badge later */}
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                     ${task.status === 'Completed' ? 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100' :
                       task.status === 'In Progress' ? 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100' :
                       task.status === 'Delayed' ? 'bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-100' :
-                      'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200' // Default for 'Not Started' etc.
+                      'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                     }`}>
                     {task.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-300">
-                  {task.dueDate || 'N/A'} {/* Display N/A if no due date */}
+                  {task.dueDate || 'N/A'}
                 </td>
-                {/* Example for an action cell:
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <a href="#" className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                    Edit
-                  </a>
-                </td>
-                */}
               </tr>
             ))
           ) : (
