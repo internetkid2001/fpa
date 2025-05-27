@@ -1,8 +1,10 @@
+// src/App.jsx
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
-
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout'; // Import the Layout component
 import ProjectSetupPage from './pages/ProjectSetupPage';
 import PreProductionBoardPage from './pages/PreProductionBoardPage';
+import StoryboardPage from './pages/StoryboardPage'; // Import the new StoryboardPage
 
 function App() {
   console.log('App component rendered');
@@ -35,7 +37,7 @@ function App() {
     console.log('Saved theme to localStorage:', theme);
   }, [theme]);
 
-  // The toggleTheme function can remain if you plan to reintroduce a proper toggle button component later
+  // toggleTheme function can be used later if a global theme toggle button is re-added
   const toggleTheme = () => {
     console.log('toggleTheme function called. Current theme before toggle:', theme);
     setTheme((prevTheme) => {
@@ -46,19 +48,19 @@ function App() {
   };
 
   return (
-    <>
-      {/* Basic Navigation */}
-      <nav className="bg-gray-200 dark:bg-gray-700 p-2 text-center">
-        <Link to="/" className="p-2 text-indigo-600 dark:text-indigo-300 hover:underline">Project Setup</Link>
-        <Link to="/board" className="p-2 text-indigo-600 dark:text-indigo-300 hover:underline">Board</Link>
-        {/* The theme toggle button that was here has been removed */}
-      </nav>
+    <Routes>
+      {/* Routes that use the common Layout */}
+      <Route path="/" element={<Layout />}>
+        <Route index element={<ProjectSetupPage />} /> {/* Default page for "/" */}
+        <Route path="board" element={<PreProductionBoardPage />} />
+        <Route path="storyboard" element={<StoryboardPage />} /> {/* Route for StoryboardPage */}
+        {/* Example for a "Not Found" page (you'll need to create NotFoundPage.jsx)
+        <Route path="*" element={<NotFoundPage />} /> 
+        */}
+      </Route>
 
-      <Routes>
-        <Route path="/" element={<ProjectSetupPage />} />
-        <Route path="/board" element={<PreProductionBoardPage />} />
-      </Routes>
-    </>
+      {/* You could define other top-level routes here that don't use the Layout, if needed */}
+    </Routes>
   );
 }
 
