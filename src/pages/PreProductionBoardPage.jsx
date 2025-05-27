@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-// REMOVE THIS LINE: import { DndContext, closestCorners } from '@dnd-kit/core';
 import KanbanColumn from '../components/KanbanColumn';
 import TaskTableView from '../components/TaskTableView';
 import TaskDetailModal from '../components/TaskDetailModal';
 
+// Ensure this full array is present
 const sampleTasksData = [
   { id: 'task-1', title: 'Equipment Draft', status: 'Not Started', category: 'Equipment', description: 'Draft initial list of required equipment.', dueDate: '2025-06-15' },
   { id: 'task-2', title: 'Shot List (Scene 1-5)', status: 'In Progress', category: 'Shot', description: 'Detail all shots for scenes 1 through 5.', dueDate: '2025-06-30' },
@@ -34,6 +34,8 @@ function PreProductionBoardPage() {
   const [selectedTask, setSelectedTask] = useState(null);
   const [categoryFilter, setCategoryFilter] = useState('All Categories');
   const [statusFilter, setStatusFilter] = useState('All Statuses');
+  const [sortConfigKey, setSortConfigKey] = useState(null);
+  const [sortConfigDirection, setSortConfigDirection] = useState('ascending');
 
   const handleOpenModal = (task = null) => {
     setSelectedTask(task);
@@ -62,23 +64,50 @@ function PreProductionBoardPage() {
     handleCloseModal();
   };
 
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfigKey === key && sortConfigDirection === 'ascending') {
+      direction = 'descending';
+    } else if (sortConfigKey === key && sortConfigDirection === 'descending') {
+      direction = 'ascending';
+    }
+    setSortConfigKey(key);
+    setSortConfigDirection(direction);
+  };
+
   const displayedTasks = useMemo(() => {
-    let filtered = [...tasks];
+    let filteredAndSortedTasks = [...tasks];
+
     if (categoryFilter && categoryFilter !== 'All Categories') {
-      filtered = filtered.filter(task => task.category === categoryFilter);
+      filteredAndSortedTasks = filteredAndSortedTasks.filter(task => task.category === categoryFilter);
     }
     if (statusFilter && statusFilter !== 'All Statuses') {
-      filtered = filtered.filter(task => task.status === statusFilter);
+      filteredAndSortedTasks = filteredAndSortedTasks.filter(task => task.status === statusFilter);
     }
-    return filtered;
-  }, [tasks, categoryFilter, statusFilter]);
 
-  // REMOVE or COMMENT OUT handleDragEnd function if it's still here
-  // const handleDragEnd = (event) => { ... };
+    if (sortConfigKey !== null) {
+      filteredAndSortedTasks.sort((a, b) => {
+        // Ensure values exist for sorting to prevent errors, treat null/undefined as less than others
+        const valA = a[sortConfigKey];
+        const valB = b[sortConfigKey];
+
+        if (valA === null || typeof valA === 'undefined') return sortConfigDirection === 'ascending' ? -1 : 1;
+        if (valB === null || typeof valB === 'undefined') return sortConfigDirection === 'ascending' ? 1 : -1;
+        
+        if (valA < valB) {
+          return sortConfigDirection === 'ascending' ? -1 : 1;
+        }
+        if (valA > valB) {
+          return sortConfigDirection === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    
+    return filteredAndSortedTasks;
+  }, [tasks, categoryFilter, statusFilter, sortConfigKey, sortConfigDirection]);
 
   return (
-    // REMOVE DndContext wrapper if it's still here
-    // <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
       <div className="min-h-screen bg-gray-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8 transition-colors duration-300">
         <div className="max-w-full mx-auto">
           <header className="mb-6">
@@ -144,11 +173,11 @@ function PreProductionBoardPage() {
             {activeView === 'kanban' && (
               <div className="flex space-x-4 overflow-x-auto pb-4">
                 {KANBAN_COLUMN_CONFIG.map((columnConfig) => {
+                  // Kanban view uses the main 'tasks' list and filters per column
                   const columnTasks = tasks.filter(task => task.status === columnConfig.statusFilter);
                   return (
                     <KanbanColumn
                       key={columnConfig.id}
-                      // id={columnConfig.statusFilter} // This was for dnd-kit
                       title={columnConfig.title}
                       tasks={columnTasks}
                       onTaskClick={handleOpenModal}
@@ -160,8 +189,11 @@ function PreProductionBoardPage() {
 
             {activeView === 'table' && (
               <TaskTableView 
-                tasks={displayedTasks} 
-                onTaskClick={handleOpenModal} 
+                tasks={displayedTasks} // Table view uses the filtered and sorted list
+                onTaskClick={handleOpenModal}
+                requestSort={requestSort}
+                sortConfigKey={sortConfigKey}
+                sortConfigDirection={sortConfigDirection}
               />
             )}
           </main>
@@ -174,7 +206,6 @@ function PreProductionBoardPage() {
           onSave={handleSaveTask}
         />
       </div>
-    // </DndContext>
   );
 }
 
