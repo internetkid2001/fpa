@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import KanbanColumn from '../components/KanbanColumn';
 import TaskTableView from '../components/TaskTableView';
 import TaskDetailModal from '../components/TaskDetailModal';
 
-// Ensure this full array is present
 const sampleTasksData = [
   { id: 'task-1', title: 'Equipment Draft', status: 'Not Started', category: 'Equipment', description: 'Draft initial list of required equipment.', dueDate: '2025-06-15' },
   { id: 'task-2', title: 'Shot List (Scene 1-5)', status: 'In Progress', category: 'Shot', description: 'Detail all shots for scenes 1 through 5.', dueDate: '2025-06-30' },
@@ -28,6 +28,8 @@ const allCategories = ['All Categories', ...new Set(sampleTasksData.map(task => 
 const allStatuses = ['All Statuses', ...KANBAN_COLUMN_CONFIG.map(col => col.statusFilter)];
 
 function PreProductionBoardPage() {
+  const { projectId } = useParams();
+
   const [activeView, setActiveView] = useState('kanban');
   const [tasks, setTasks] = useState(sampleTasksData);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,6 +38,13 @@ function PreProductionBoardPage() {
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [sortConfigKey, setSortConfigKey] = useState(null);
   const [sortConfigDirection, setSortConfigDirection] = useState('ascending');
+
+  useEffect(() => {
+    console.log("Current Project ID:", projectId);
+    setCategoryFilter('All Categories');
+    setStatusFilter('All Statuses');
+    setSortConfigKey(null);
+  }, [projectId]);
 
   const handleOpenModal = (task = null) => {
     setSelectedTask(task);
@@ -76,35 +85,54 @@ function PreProductionBoardPage() {
   };
 
   const displayedTasks = useMemo(() => {
+    console.log("useMemo for displayedTasks: Initial tasks count:", tasks.length);
+    console.log("useMemo filters:", { categoryFilter, statusFilter });
+    console.log("useMemo sortConfig:", { sortConfigKey, sortConfigDirection });
+
+    if (!Array.isArray(tasks)) {
+      console.error("useMemo: Main 'tasks' state is not an array!", tasks);
+      return []; // Return an empty array to prevent further errors
+    }
+
     let filteredAndSortedTasks = [...tasks];
 
     if (categoryFilter && categoryFilter !== 'All Categories') {
       filteredAndSortedTasks = filteredAndSortedTasks.filter(task => task.category === categoryFilter);
+      console.log("After category filter:", filteredAndSortedTasks.length, "tasks");
     }
     if (statusFilter && statusFilter !== 'All Statuses') {
       filteredAndSortedTasks = filteredAndSortedTasks.filter(task => task.status === statusFilter);
+      console.log("After status filter:", filteredAndSortedTasks.length, "tasks");
     }
 
     if (sortConfigKey !== null) {
-      filteredAndSortedTasks.sort((a, b) => {
-        const valA = a[sortConfigKey];
-        const valB = b[sortConfigKey];
-        if (valA === null || typeof valA === 'undefined') return sortConfigDirection === 'ascending' ? -1 : 1;
-        if (valB === null || typeof valB === 'undefined') return sortConfigDirection === 'ascending' ? 1 : -1;
-        if (valA < valB) { return sortConfigDirection === 'ascending' ? -1 : 1; }
-        if (valA > valB) { return sortConfigDirection === 'ascending' ? 1 : -1; }
-        return 0;
-      });
+      console.log(`Sorting by key: ${sortConfigKey}, direction: ${sortConfigDirection}`);
+      try {
+        filteredAndSortedTasks.sort((a, b) => {
+          const valA = a[sortConfigKey];
+          const valB = b[sortConfigKey];
+          if (valA === null || typeof valA === 'undefined') return sortConfigDirection === 'ascending' ? -1 : 1;
+          if (valB === null || typeof valB === 'undefined') return sortConfigDirection === 'ascending' ? 1 : -1;
+          if (valA < valB) { return sortConfigDirection === 'ascending' ? -1 : 1; }
+          if (valA > valB) { return sortConfigDirection === 'ascending' ? 1 : -1; }
+          return 0;
+        });
+        console.log("After sorting:", filteredAndSortedTasks.length, "tasks");
+      } catch (error) {
+        console.error("Error during sorting:", error);
+      }
     }
+    
+    console.log("useMemo final displayedTasks:", filteredAndSortedTasks);
     return filteredAndSortedTasks;
   }, [tasks, categoryFilter, statusFilter, sortConfigKey, sortConfigDirection]);
 
   return (
       <div className="min-h-screen bg-gray-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8 transition-colors duration-300">
-        <div className="max-w-full mx-auto"> {/* Keep max-w-full for board page content */}
+        <div className="max-w-full mx-auto">
           <header className="mb-6">
             <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold">Pre-Production Board</h1>
+              <h1 className="text-3xl font-bold">Pre-Production Board (Project: {projectId})</h1>
               <button
                 onClick={() => handleOpenModal()}
                 className="px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
@@ -130,14 +158,30 @@ function PreProductionBoardPage() {
                 <div className="flex items-center space-x-2 ml-auto">
                   <div>
                     <label htmlFor="category-filter" className="sr-only">Filter by Category</label>
-                    <select id="category-filter" name="category" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-slate-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100">
-                      {allCategories.map(category => (<option key={category} value={category}>{category}</option>))}
+                    <select
+                      id="category-filter"
+                      name="category"
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-slate-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                    >
+                      {allCategories.map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <label htmlFor="status-filter" className="sr-only">Filter by Status</label>
-                    <select id="status-filter" name="status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-slate-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100">
-                      {allStatuses.map(status => (<option key={status} value={status}>{status}</option>))}
+                    <select
+                      id="status-filter"
+                      name="status"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-slate-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                    >
+                      {allStatuses.map(status => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -147,8 +191,7 @@ function PreProductionBoardPage() {
 
           <main>
             {activeView === 'kanban' && (
-              // MODIFIED: Use flex-wrap and gap for wrapping columns
-              <div className="flex flex-wrap gap-6 pb-4"> {/* Increased gap slightly for better visual separation when wrapped */}
+              <div className="flex flex-wrap gap-6 pb-4">
                 {KANBAN_COLUMN_CONFIG.map((columnConfig) => {
                   const columnTasks = tasks.filter(task => task.status === columnConfig.statusFilter);
                   return (

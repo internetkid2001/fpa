@@ -20,12 +20,14 @@ function Layout() {
               >
                 Project Setup
               </Link>
-              <Link
-                to="/board"
+              {/* Temporarily comment out or remove direct /board link as it now needs a projectId */}
+              {/* <Link 
+                to="/board" // This will likely result in an error or empty projectId now
                 className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Board
-              </Link>
+              </Link> 
+              */}
               <Link
                 to="/storyboard"
                 className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-2 rounded-md text-sm font-medium"
@@ -37,7 +39,6 @@ function Layout() {
         </div>
       </nav>
 
-      {/* This is where child routes will be rendered */}
       <main className="flex-grow container mx-auto px-4 py-8 sm:px-6 lg:px-8">
         <Outlet />
       </main>
