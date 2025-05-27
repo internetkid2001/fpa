@@ -1,9 +1,9 @@
-import React, { useState } from 'react'; // Removed useEffect as it's not used here directly
+import React, { useState, useMemo } from 'react';
+// REMOVE THIS LINE: import { DndContext, closestCorners } from '@dnd-kit/core';
 import KanbanColumn from '../components/KanbanColumn';
 import TaskTableView from '../components/TaskTableView';
 import TaskDetailModal from '../components/TaskDetailModal';
 
-// ... (sampleTasksData and KANBAN_COLUMN_CONFIG remain the same)
 const sampleTasksData = [
   { id: 'task-1', title: 'Equipment Draft', status: 'Not Started', category: 'Equipment', description: 'Draft initial list of required equipment.', dueDate: '2025-06-15' },
   { id: 'task-2', title: 'Shot List (Scene 1-5)', status: 'In Progress', category: 'Shot', description: 'Detail all shots for scenes 1 through 5.', dueDate: '2025-06-30' },
@@ -24,117 +24,157 @@ const KANBAN_COLUMN_CONFIG = [
   { id: 'completedCol', title: 'Completed', statusFilter: 'Completed' },
 ];
 
+const allCategories = ['All Categories', ...new Set(sampleTasksData.map(task => task.category))];
+const allStatuses = ['All Statuses', ...KANBAN_COLUMN_CONFIG.map(col => col.statusFilter)];
+
 function PreProductionBoardPage() {
   const [activeView, setActiveView] = useState('kanban');
   const [tasks, setTasks] = useState(sampleTasksData);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null); // if null, indicates creating a new task for the modal
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState('All Categories');
+  const [statusFilter, setStatusFilter] = useState('All Statuses');
 
-  // Modified to handle opening for 'new' task or 'edit' task
-  const handleOpenModal = (task = null) => { // Default task to null for creating
-    setSelectedTask(task); // If task is null, modal will know it's for creation
+  const handleOpenModal = (task = null) => {
+    setSelectedTask(task);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedTask(null); // Reset selectedTask on close
+    setSelectedTask(null);
   };
 
-  // Modified to handle both creating new tasks and updating existing ones
   const handleSaveTask = (taskDataFromModal) => {
     if (taskDataFromModal.id) {
-      // Editing existing task
       setTasks(prevTasks =>
         prevTasks.map(task =>
           task.id === taskDataFromModal.id ? { ...task, ...taskDataFromModal } : task
         )
       );
     } else {
-      // Adding new task
       const newTask = {
         ...taskDataFromModal,
-        id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Generate a unique ID
+        id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       };
       setTasks(prevTasks => [...prevTasks, newTask]);
     }
     handleCloseModal();
   };
 
+  const displayedTasks = useMemo(() => {
+    let filtered = [...tasks];
+    if (categoryFilter && categoryFilter !== 'All Categories') {
+      filtered = filtered.filter(task => task.category === categoryFilter);
+    }
+    if (statusFilter && statusFilter !== 'All Statuses') {
+      filtered = filtered.filter(task => task.status === statusFilter);
+    }
+    return filtered;
+  }, [tasks, categoryFilter, statusFilter]);
+
+  // REMOVE or COMMENT OUT handleDragEnd function if it's still here
+  // const handleDragEnd = (event) => { ... };
+
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8 transition-colors duration-300">
-      <div className="max-w-full mx-auto">
-        <header className="mb-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">Pre-Production Board</h1>
-            {/* Add Task Button */}
-            <button
-              onClick={() => handleOpenModal()} // Call with no arguments for 'add task' mode
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
-            >
-              Add New Task
-            </button>
-          </div>
-          <div className="mt-4 flex space-x-2">
-            {/* ... (View switcher buttons remain unchanged) ... */}
-            <button
-              onClick={() => setActiveView('kanban')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150
-                ${activeView === 'kanban'
-                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white'
-                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600'
-                }`}
-            >
-              Kanban View
-            </button>
-            <button
-              onClick={() => setActiveView('table')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150
-                ${activeView === 'table'
-                  ? 'bg-indigo-600 dark:bg-indigo-500 text-white'
-                  : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600'
-                }`}
-            >
-              Table View
-            </button>
-          </div>
-        </header>
-
-        <main>
-          {/* ... (Kanban and Table view rendering remains the same, passing handleOpenModal) ... */}
-          {activeView === 'kanban' && (
-            <div className="flex space-x-4 overflow-x-auto pb-4">
-              {KANBAN_COLUMN_CONFIG.map((columnConfig) => {
-                const columnTasks = tasks.filter(task => task.status === columnConfig.statusFilter);
-                return (
-                  <KanbanColumn
-                    key={columnConfig.id}
-                    title={columnConfig.title}
-                    tasks={columnTasks}
-                    onTaskClick={handleOpenModal}
-                  />
-                );
-              })}
+    // REMOVE DndContext wrapper if it's still here
+    // <DndContext onDragEnd={handleDragEnd} collisionDetection={closestCorners}>
+      <div className="min-h-screen bg-gray-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-4 sm:p-6 lg:p-8 transition-colors duration-300">
+        <div className="max-w-full mx-auto">
+          <header className="mb-6">
+            <div className="flex justify-between items-center">
+              <h1 className="text-3xl font-bold">Pre-Production Board</h1>
+              <button
+                onClick={() => handleOpenModal()}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white text-sm font-medium rounded-md transition-colors"
+              >
+                Add New Task
+              </button>
             </div>
-          )}
+            <div className="mt-4 flex items-center space-x-2">
+              <button
+                onClick={() => setActiveView('kanban')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${activeView === 'kanban' ? 'bg-indigo-600 dark:bg-indigo-500 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600'}`}
+              >
+                Kanban View
+              </button>
+              <button
+                onClick={() => setActiveView('table')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors duration-150 ${activeView === 'table' ? 'bg-indigo-600 dark:bg-indigo-500 text-white' : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-600'}`}
+              >
+                Table View
+              </button>
+              
+              {activeView === 'table' && (
+                <div className="flex items-center space-x-2 ml-auto">
+                  <div>
+                    <label htmlFor="category-filter" className="sr-only">Filter by Category</label>
+                    <select
+                      id="category-filter"
+                      name="category"
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-slate-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                    >
+                      {allCategories.map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="status-filter" className="sr-only">Filter by Status</label>
+                    <select
+                      id="status-filter"
+                      name="status"
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-slate-600 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                    >
+                      {allStatuses.map(status => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </header>
 
-          {activeView === 'table' && (
-            <TaskTableView 
-              tasks={tasks} 
-              onTaskClick={handleOpenModal} 
-            />
-          )}
-        </main>
+          <main>
+            {activeView === 'kanban' && (
+              <div className="flex space-x-4 overflow-x-auto pb-4">
+                {KANBAN_COLUMN_CONFIG.map((columnConfig) => {
+                  const columnTasks = tasks.filter(task => task.status === columnConfig.statusFilter);
+                  return (
+                    <KanbanColumn
+                      key={columnConfig.id}
+                      // id={columnConfig.statusFilter} // This was for dnd-kit
+                      title={columnConfig.title}
+                      tasks={columnTasks}
+                      onTaskClick={handleOpenModal}
+                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {activeView === 'table' && (
+              <TaskTableView 
+                tasks={displayedTasks} 
+                onTaskClick={handleOpenModal} 
+              />
+            )}
+          </main>
+        </div>
+
+        <TaskDetailModal 
+          isOpen={isModalOpen} 
+          task={selectedTask} 
+          onClose={handleCloseModal}
+          onSave={handleSaveTask}
+        />
       </div>
-
-      <TaskDetailModal
-        isOpen={isModalOpen}
-        // Pass the selectedTask. If it's null, the modal will know it's for creating.
-        task={selectedTask} 
-        onClose={handleCloseModal}
-        onSave={handleSaveTask}
-      />
-    </div>
+    // </DndContext>
   );
 }
 

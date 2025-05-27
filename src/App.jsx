@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-// import ProjectSetupPage from './pages/ProjectSetupPage'; // Comment out or remove
-import PreProductionBoardPage from './pages/PreProductionBoardPage'; // Import the new page
+import { Routes, Route, Link } from 'react-router-dom';
+
+import ProjectSetupPage from './pages/ProjectSetupPage';
+import PreProductionBoardPage from './pages/PreProductionBoardPage';
 
 function App() {
-  // ... (all your existing theme logic from App.jsx should remain unchanged)
   console.log('App component rendered');
 
   const [theme, setTheme] = useState(() => {
@@ -34,8 +35,8 @@ function App() {
     console.log('Saved theme to localStorage:', theme);
   }, [theme]);
 
+  // The toggleTheme function can remain if you plan to reintroduce a proper toggle button component later
   const toggleTheme = () => {
-    // This function is not currently used by any UI element but can remain
     console.log('toggleTheme function called. Current theme before toggle:', theme);
     setTheme((prevTheme) => {
       const newTheme = prevTheme === 'light' ? 'dark' : 'light';
@@ -46,8 +47,17 @@ function App() {
 
   return (
     <>
-      {/* Render the PreProductionBoardPage */}
-      <PreProductionBoardPage />
+      {/* Basic Navigation */}
+      <nav className="bg-gray-200 dark:bg-gray-700 p-2 text-center">
+        <Link to="/" className="p-2 text-indigo-600 dark:text-indigo-300 hover:underline">Project Setup</Link>
+        <Link to="/board" className="p-2 text-indigo-600 dark:text-indigo-300 hover:underline">Board</Link>
+        {/* The theme toggle button that was here has been removed */}
+      </nav>
+
+      <Routes>
+        <Route path="/" element={<ProjectSetupPage />} />
+        <Route path="/board" element={<PreProductionBoardPage />} />
+      </Routes>
     </>
   );
 }
